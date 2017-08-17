@@ -19,6 +19,25 @@ MATRIX* new_matrix( int nrow, int ncol ){
 	int i;
 	for( i=0; i<nrow; i++ )
 		matrix->values[i] = (double*)malloc(sizeof(double)*ncol);
+	return matrix;
+}
+
+void print_matrix( MATRIX* matrix ){
+	int i, j;
+	for( i=0; i<matrix->nrow; i++ ){
+		for( j=0; j<matrix->ncol; j++ ){
+			printf("%lf ", matrix->values[i][j] );
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+void print_neural_network( NEURAL_NETWORK* model ){
+
+	printf("%d %d %d\n", model->input_length, model->hidden_length, model->output_length );
+	print_matrix( model->hidden_layer );
+	print_matrix( model->output_layer );
 
 }
 
@@ -27,15 +46,6 @@ void free_matrix( MATRIX* matrix ){
 	for( i=0; i<matrix->nrow; i++ )
 		free( matrix->values[i] );
 	free( matrix );
-}
-
-void print_matrix( MATRIX* matrix ){
-	int i, j;
-	for( i=0; i<matrix->nrow; i++ )
-		for( j=0; j<matrix->ncol; j++ )
-			printf("%lf ", matrix->values[i][j] );
-		printf("\n");
-	printf("\n");
 }
 
 void fill( MATRIX* layer ){
@@ -56,7 +66,7 @@ int argmax( double* vetor, int length ){
 
 NEURAL_NETWORK* new_neural_network( int hidden_length, int output_length, int input_length, double(*function)(double) ){
 
-	NEURAL_NETWORK*  m = (NEURAL_NETWORK*)malloc(sizeof(NEURAL_NETWORK));
+	NEURAL_NETWORK*  m = (NEURAL_NETWORK*)malloc( sizeof( NEURAL_NETWORK ));
 	m->hidden_length = hidden_length;
 	m->input_length = input_length;
 	m->output_length = output_length;
@@ -101,22 +111,19 @@ void compute_net( MATRIX* layer, double* vetor, double* net ){
 }
 
 double* run( NEURAL_NETWORK* m, double* input ){
-	int i;
 
+	int i;
 	double* net_hidden = alloc_vector( m->hidden_length );
 	double* net_output = alloc_vector( m->output_length );
 	double* f_hidden = alloc_vector( m->hidden_length );
 	double* f_output = alloc_vector( m->output_length );
-
 	compute_net( m->hidden_layer, input, net_hidden );
 	apply( m->function, f_hidden, net_hidden, m->hidden_length );
 	compute_net( m->output_layer, f_hidden , net_output );
 	apply( m->function, f_output, net_output, m->output_length );
-
 	free( net_hidden );
 	free( f_hidden );
 	free( net_output );
-	free( f_output );
 
 	return f_output;
 }

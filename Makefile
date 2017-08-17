@@ -1,4 +1,4 @@
-main: game neural genetic
+main: genetic game 
 	cc main.c game.o neural_network.o genetic.o -o ex -lm
 
 game:

@@ -6,8 +6,17 @@
 #include "neural_network.h"
 #include "game.h"
 
-int fitness( NEURAL_NETWORK* element ){
+#define true 1
+#define false 0
+#define min(a,b) a < b ? a : b
+#define max(a,b) a > b ? a : b
 
+int turn;
+
+int testing( NEURAL_NETWORK* element ){
+
+	if( element == NULL )
+		return 0;
 	int i, j, ans;
 	char dictionary[4] = {'w','a','s','d'};
 	GAME* game = new_game();
@@ -18,7 +27,8 @@ int fitness( NEURAL_NETWORK* element ){
 			for( j=0; j<4; j++ )
 				temp[ i*4 + j ] = game->table[i][j];
 		double* result = run( element, temp );
-		move( dictionary[ argmax( result, 4 ) ], game );
+		if( move( dictionary[ argmax( result, 4 ) ], game ) == false )
+			break;
 		free(result);
 	}
 	ans = rank( game->table );
@@ -30,13 +40,13 @@ int fitness( NEURAL_NETWORK* element ){
 
 MATRIX* matrix_crossover( MATRIX* pai, MATRIX* mae ){
 
-	if( pai->nrow != mae->nrow || pai->ncol != mae->ncol )
-		return NULL;
-	MATRIX* kid = new_matrix(  mae->nrow, mae->ncol );
+	MATRIX* kid = new_matrix( (mae->nrow + pai->nrow)/2, (mae->ncol + pai->ncol)/2 );
 	srand(time(NULL));
-	int i, j;
-	for( i=0; i<mae->nrow; i++ ){
-		for( j=0; j<mae->ncol; j++ ){
+	int i, j, nrow, ncol;
+	nrow = min( mae->nrow, pai->nrow );
+	ncol = min( mae->ncol, pai->ncol );
+	for( i = 0; i < nrow; i++ ){
+		for( j = 0; j < ncol; j++ ){
 			if( rand()%2 )
 				kid->values[i][j] = mae->values[i][j];
 			else
@@ -44,23 +54,29 @@ MATRIX* matrix_crossover( MATRIX* pai, MATRIX* mae ){
 		}
 	}
 
+/*	if( mae->nrow > pai->nrow ){
+		for( i = nrow; i < kid->nrow; i++ )
+			
+	}
+*/
 	return kid;
 }
 
 NEURAL_NETWORK* neural_network_crossover( NEURAL_NETWORK* pai, NEURAL_NETWORK* mae ){
 
-	if( pai->hidden_length != mae->hidden_length || pai->output_length != mae->output_length || pai->input_length != mae->input_length )
-		return NULL;
-	NEURAL_NETWORK* kid = new_neural_network( pai->input_length, pai->hidden_length, pai->output_length, sigmoid );
+	NEURAL_NETWORK* kid = new_neural_network( 16, (pai->hidden_length + mae->hidden_length)/2, 4, sigmoid );
 	kid->hidden_layer = matrix_crossover( pai->hidden_layer, mae->hidden_layer );
+	matrix_mutation( kid->hidden_layer );
 	kid->output_layer = matrix_crossover( pai->output_layer, mae->output_layer );
-	return kid;
+	matrix_mutation( kid->output_layer );
 
+	return kid;
 }
 
 void matrix_mutation( MATRIX* matrix ){
 
-	srand(time(NULL));
+	srand(time(NULL)*turn);
+	turn++;
 	if( ( rand() % 100 ) < 100*prob ){
 		int i = rand()%matrix->nrow;
 		int j = rand()%matrix->ncol;
@@ -69,7 +85,6 @@ void matrix_mutation( MATRIX* matrix ){
 		else
 			matrix->values[i][j] -= tax;
 	}
-
 }
 
 void neural_network_mutation( NEURAL_NETWORK* neural_network ){
@@ -79,35 +94,43 @@ void neural_network_mutation( NEURAL_NETWORK* neural_network ){
 
 }
 
-NEURAL_NETWORK* genetic_elitism( int size, int generation, int(*fitness)(NEURAL_NETWORK*), void(*mutation)(NEURAL_NETWORK*), double(*crossover)(NEURAL_NETWORK*, NEURAL_NETWORK*), int input_length, int hidden_length, int output_length ){
+NEURAL_NETWORK* genetic_elitism( int size, int generation, int(*fitness)(NEURAL_NETWORK*), void(*mutation)(NEURAL_NETWORK*), NEURAL_NETWORK*(*crossover)(NEURAL_NETWORK*, NEURAL_NETWORK*), int input_length, int hidden_length, int output_length ){
 
 	NEURAL_NETWORK* population[size];
 	NEURAL_NETWORK* best = NULL;
-	int i, j;
+	int i, j, best_fit=0, fit;
 	srand(time(NULL));
+	turn = 0;
 
 	for( i = 0; i<size; i++ ){
 		population[i] = new_neural_network( hidden_length, output_length, input_length, sigmoid );
-		if( fitness( population[i] ) > fitness( best ) )
+		fit = fitness( population[i] );
+		if( fit > best_fit ){
 			best = population[i];
+			best_fit = fit;
+			printf("best =  %d\n", best_fit );
+		}
 	}
-
 	for( j=0; j<generation; j++){
 		for( i=0; i<size; i++ ){
 			if( population[i] != best ){
 				neural_network_crossover( best, population[i] );
 				mutation( population[i] );
 			}
-			if( fitness(population[i]) > fitness(best) )
+			fit = fitness( population[i] );
+			if( fit > best_fit ){
 				best = population[i];
+				best_fit = fit;
+				printf("best =  %d\n", best_fit );
+			}
 		}
-		printf("%d\n",fitness( best ));
 	}
 	for( i=0; i<size; i++ )
 		if( population[i] != best )
 			free_neural_network( population[i] );
 
 	return best;
+
 }
 
 NEURAL_NETWORK* genetic_tourney( int size, int generation, int(*fitness)(NEURAL_NETWORK*), void(*mutation)(NEURAL_NETWORK*), double(*crossover)(NEURAL_NETWORK*, NEURAL_NETWORK*), int input_length, int hidden_length, int output_length ){
@@ -132,7 +155,7 @@ NEURAL_NETWORK* genetic_tourney( int size, int generation, int(*fitness)(NEURAL_
 
 	return best;
 }
-
+/*
 void* genetic_roulette( int size, int generation, int(*fitness)(NEURAL_NETWORK*), void(*mutation)(NEURAL_NETWORK*), double(*crossover)(NEURAL_NETWORK*, NEURAL_NETWORK*), int input_length, int hidden_length, int output_length ){
 
 	NEURAL_NETWORK* population[size];
@@ -173,9 +196,9 @@ void* genetic_roulette( int size, int generation, int(*fitness)(NEURAL_NETWORK*)
 		}
 		printf("%lf\n",(float)fitness_sum/(float)size);
 	}
-	for( i=0; i<size; i++ )
 //		if( population[i] != best )
+	for( i=0; i<size; i++ )
 		free_neural_network( population[i] );
 
 //	return best;
-}
+}*/

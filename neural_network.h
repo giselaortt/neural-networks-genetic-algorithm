@@ -23,6 +23,8 @@ typedef struct neural_network{
 
 double* alloc_vector( int size );
 
+void print_neural_network( NEURAL_NETWORK* model );
+
 NEURAL_NETWORK* new_neural_network( int hidden_length, int output_length, int input_length, double(*function)(double) );
 
 MATRIX* new_matrix( int nrow, int ncol );

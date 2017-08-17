@@ -39,12 +39,10 @@ int new_tile( int **table ){
 	for( i=0; i<4; i++ )
 		for( j=0; j<4; j++ )
 			if( table[i][j] == 0 ) num++;
-	printf("num = %d\n", num );
 	if( num == 0 )
 		return erro;
-	int position = rand()%num + 1;
-	printf("position = %d\n", position );
-	
+
+	int position = rand()%num;
 	for( i=0; i<4 && position != 0; i++ ){
 		for( j=0; j<4 && position != 0; j ++ ){
 			if( table[i][j] == 0 ){
@@ -224,7 +222,7 @@ int move_down( int **table, int* points ){
 			}
 		}
 
-		stop = 4 - 1;
+		stop = 3;
 	}
 
 	return move;
@@ -237,18 +235,26 @@ int move( char direction, GAME* game ) {
 	if(direction == 'w')
 		if(move_up( game->table, &game->points ))
 			new_tile( game->table );
+		else
+			return false;
 
 	if(direction == 's')
 		if(move_down( game->table, &game->points ))
 			new_tile( game->table );
+		else
+			return false;
 
 	if(direction == 'a')
 		if(move_left( game->table, &game->points ))
 			new_tile( game->table );
+		else
+			return false;
 
 	if(direction == 'd')
 		if(move_right( game->table, &game->points ))
 			new_tile( game->table );
+		else
+			return false;
 
 	return true;
 }
