@@ -7,7 +7,11 @@
 
 int main(){
 
-	int i, j;
+
+	NEURAL_NETWORK* model = genetic_elitism( 100, 1000, testing, neural_network_mutation, neural_network_crossover, 16, 9, 4 );
+//	free_neural_network( model );
+
+/*	int i, j;
 	GAME* game = new_game();
 	new_tile( game->table );
 	print_table( game->table );
@@ -22,6 +26,6 @@ int main(){
 	}
 
 	free_game( game );
-
+*/
 return 0;
 }
