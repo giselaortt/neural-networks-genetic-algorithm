@@ -10,6 +10,7 @@
 #define false 0
 #define true 1
 
+
 GAME* new_game(){
 
 	int i, j;
@@ -294,5 +295,15 @@ int rank( int **table ){
 			if(maior < table[i][j])
 				maior = table[i][j];
 
-	return maior;
+	if( maior == 0 ) return 0;
+	return log(maior)/log(2);
+}
+void reinit( GAME* game ){
+	if( game == NULL ) return;
+	game->points = 0;
+	int i, j;
+	for( i=0; i<4; i++ )
+		for( j=0; j<4; j++ )
+			game->table[i][j] = 0;
+	new_tile( game->table );
 }

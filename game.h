@@ -8,6 +8,8 @@ typedef struct game{
 
 GAME* new_game();
 
+void reinit( GAME* game );
+
 void free_game( GAME* game );
 
 int new_tile( int **table );
